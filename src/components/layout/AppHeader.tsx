@@ -31,14 +31,6 @@ export default function AppHeader() {
           >
             Dashboard
           </NavLink>
-          <NavLink
-            to="/map"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
-            }
-          >
-            Map
-          </NavLink>
         </nav>
       </div>
     </header>

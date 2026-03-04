@@ -32,3 +32,16 @@
   font-size: 1.5rem;
   color: var(--color-text-primary);
 }
+
+.sectionHeading {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.mapContainer {
+  height: 450px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}

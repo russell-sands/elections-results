@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
-import MapView from '@arcgis/core/views/MapView';
-import ArcGISMap from '@arcgis/core/Map';
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
-import SimpleRenderer from '@arcgis/core/renderers/SimpleRenderer';
-import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
-import { envConfig } from '../../config/env';
-import styles from './ElectionMap.module.css';
+import { useEffect, useRef } from "react";
+import MapView from "@arcgis/core/views/MapView";
+import ArcGISMap from "@arcgis/core/Map";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
+import { envConfig } from "../../config/env";
+import styles from "./ElectionMap.module.css";
 
 export default function ElectionMap() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,19 +20,19 @@ export default function ElectionMap() {
         symbol: new SimpleFillSymbol({
           color: [0, 0, 0, 0],
           outline: {
-            color: [176, 172, 164, 1],
+            color: "black",
             width: 1.5,
           },
         }),
       }),
       popupTemplate: {
-        title: '{internal_id}',
-        content: 'Boundary ID: {GlobalID}',
+        title: "{internal_id}",
+        content: "Boundary ID: {GlobalID}",
       },
     });
 
     const map = new ArcGISMap({
-      basemap: 'gray-vector',
+      // basemap: "gray-vector",
       layers: [boundariesLayer],
     });
 
