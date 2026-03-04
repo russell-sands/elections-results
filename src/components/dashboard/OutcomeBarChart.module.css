@@ -14,6 +14,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  padding-bottom: var(--space-sm);
   gap: var(--space-sm);
 }
 
@@ -53,13 +54,12 @@
   width: 100%;
   height: 24px;
   background-color: var(--color-surface-raised);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
-  border-radius: var(--radius-sm);
   transform-origin: left;
   animation: barGrow 600ms ease-out forwards;
 }
