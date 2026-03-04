@@ -24,6 +24,7 @@ export async function fetchIssuesRegistry(url: string): Promise<IssueRegistryRow
       issueUrl: f.attributes.issue_url as string,
       issueType: f.attributes.issue_type as 'candidate' | 'ballot measure' | 'other',
       winThreshold: f.attributes.win_threshold as number | null,
+      allowedWinners: (f.attributes.allowed_winners as number | null) ?? 1,
       outcomeLabels,
       hasTotalVotes: (f.attributes.has_total_votes as number) === 1,
       hasBallotWoVote: (f.attributes.has_ballot_wo_vote as number) === 1,

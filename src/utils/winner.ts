@@ -38,80 +38,72 @@ export function computeOutcomeResults(
   }
 
   const threshold = registry.winThreshold;
+  const allowedWinners = registry.allowedWinners ?? 1;
+
+  // Sort descending by votes
+  const sorted = [...aggregates].sort((a, b) => b.votes - a.votes);
+
+  // Determine top-N candidates, handling ties at the cut boundary
+  const cutoffVotes = sorted[allowedWinners - 1]?.votes ?? 0;
+  const aboveCut = sorted.filter((a) => a.votes > cutoffVotes);
+  const atCut = sorted.filter((a) => a.votes === cutoffVotes);
+  const slotsRemaining = allowedWinners - aboveCut.length;
+  const isTieAtBoundary = atCut.length > slotsRemaining;
+
+  // Build candidate set: those clearly in top N
+  const topNFields = new Set(aboveCut.map((a) => a.field));
+  if (!isTieAtBoundary) {
+    atCut.forEach((a) => topNFields.add(a.field));
+  }
+  const tiedFields = new Set(isTieAtBoundary ? atCut.map((a) => a.field) : []);
+
+  // Apply threshold filter if set
+  let winnerFields: Set<string>;
+  let winnerStatus: WinnerStatus;
 
   if (threshold != null) {
-    // Threshold-based winner determination
-    const meetingThreshold = aggregates.filter(
-      (a) => a.votes / totalVotesCast >= threshold,
-    );
+    // From top-N, only keep those meeting threshold
+    const meetsThreshold = (a: OutcomeAggregate) =>
+      a.votes / totalVotesCast >= threshold;
 
-    if (meetingThreshold.length === 0) {
-      // No outcome meets threshold
-      return {
-        outcomes: aggregates
-          .sort((a, b) => b.votes - a.votes)
-          .map((a) => ({
-            ...a,
-            share: a.votes / totalVotesCast,
-            isWinner: false,
-            isTied: false,
-          })),
-        totalVotesCast,
-        winnerStatus: 'threshold-not-met',
-      };
+    if (isTieAtBoundary) {
+      // Tied outcomes at cut — check if any of the non-tied top outcomes meet threshold
+      const confirmedWinners = aboveCut.filter(meetsThreshold);
+      if (confirmedWinners.length > 0) {
+        winnerFields = new Set(confirmedWinners.map((a) => a.field));
+        winnerStatus = 'winner';
+      } else {
+        winnerFields = new Set();
+        winnerStatus = 'threshold-not-met';
+      }
+      // Still mark the tie at the boundary
+    } else {
+      const topNOutcomes = sorted.filter((a) => topNFields.has(a.field));
+      const winners = topNOutcomes.filter(meetsThreshold);
+      winnerFields = new Set(winners.map((a) => a.field));
+      winnerStatus = winners.length > 0 ? 'winner' : 'threshold-not-met';
     }
-
-    if (meetingThreshold.length > 1) {
-      // Multiple outcomes meet threshold — check for tie (equal votes)
-      const topVotes = Math.max(...meetingThreshold.map((a) => a.votes));
-      const tiedAtTop = meetingThreshold.filter((a) => a.votes === topVotes);
-      const isTie = tiedAtTop.length > 1;
-
-      return {
-        outcomes: aggregates
-          .sort((a, b) => b.votes - a.votes)
-          .map((a) => ({
-            ...a,
-            share: a.votes / totalVotesCast,
-            isWinner: !isTie && a.votes / totalVotesCast >= threshold,
-            isTied: isTie && a.votes === topVotes,
-          })),
-        totalVotesCast,
-        winnerStatus: isTie ? 'tie' : 'winner',
-      };
+  } else {
+    // No threshold — top N win unconditionally
+    if (isTieAtBoundary) {
+      winnerFields = new Set(aboveCut.map((a) => a.field));
+      winnerStatus = aboveCut.length > 0 ? 'winner' : 'tie';
+      // If no one is clearly above the tie, it's purely a tie
+      if (aboveCut.length === 0) winnerStatus = 'tie';
+    } else {
+      winnerFields = topNFields;
+      winnerStatus = 'winner';
     }
-
-    // Exactly one outcome meets threshold
-    const winner = meetingThreshold[0]!;
-    return {
-      outcomes: aggregates
-        .sort((a, b) => b.votes - a.votes)
-        .map((a) => ({
-          ...a,
-          share: a.votes / totalVotesCast,
-          isWinner: a.field === winner.field,
-          isTied: false,
-        })),
-      totalVotesCast,
-      winnerStatus: 'winner',
-    };
   }
 
-  // Plurality: most votes wins
-  const maxVotes = Math.max(...aggregates.map((a) => a.votes));
-  const topOutcomes = aggregates.filter((a) => a.votes === maxVotes);
-  const isTie = topOutcomes.length > 1;
-
   return {
-    outcomes: aggregates
-      .sort((a, b) => b.votes - a.votes)
-      .map((a) => ({
-        ...a,
-        share: a.votes / totalVotesCast,
-        isWinner: !isTie && a.votes === maxVotes,
-        isTied: isTie && a.votes === maxVotes,
-      })),
+    outcomes: sorted.map((a) => ({
+      ...a,
+      share: a.votes / totalVotesCast,
+      isWinner: winnerFields.has(a.field),
+      isTied: tiedFields.has(a.field),
+    })),
     totalVotesCast,
-    winnerStatus: isTie ? 'tie' : 'winner',
+    winnerStatus,
   };
 }

@@ -24,6 +24,7 @@ export interface IssueRegistryRow {
   issueUrl: string;
   issueType: 'candidate' | 'ballot measure' | 'other';
   winThreshold: number | null;
+  allowedWinners: number;
   outcomeLabels: string[];
   hasTotalVotes: boolean;
   hasBallotWoVote: boolean;
