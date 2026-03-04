@@ -5,6 +5,7 @@ import type { IFeature, IField } from '@esri/arcgis-rest-request';
 export interface QueryResult {
   features: IFeature[];
   fields: IField[];
+  spatialReference: { wkid: number; latestWkid?: number } | null;
 }
 
 export async function fetchAllFeatures(options: {
@@ -19,9 +20,14 @@ export async function fetchAllFeatures(options: {
     returnGeometry: options.returnGeometry ?? false,
   })) as IQueryFeaturesResponse;
 
+  const sr = (response as Record<string, unknown>).spatialReference as
+    | { wkid: number; latestWkid?: number }
+    | undefined;
+
   return {
     features: response.features,
     fields: response.fields ?? [],
+    spatialReference: sr ?? null,
   };
 }
 

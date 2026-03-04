@@ -6,6 +6,7 @@ export interface ElectionState {
   boundaries: Boundary[];
   boundariesHaveInternalId: boolean;
   boundaryInternalIdAlias: string | null;
+  boundariesSpatialReference: { wkid: number; latestWkid?: number } | null;
   issueRegistry: IssueRegistryRow[];
   voteData: Map<string, VoteRow[]>;
   totalRegisteredVoters: number | null;
@@ -19,6 +20,7 @@ export type ElectionAction =
         boundaries: Boundary[];
         boundariesHaveInternalId: boolean;
         boundaryInternalIdAlias: string | null;
+        boundariesSpatialReference: { wkid: number; latestWkid?: number } | null;
         issueRegistry: IssueRegistryRow[];
         voteData: Map<string, VoteRow[]>;
         totalRegisteredVoters: number | null;
@@ -32,6 +34,7 @@ export const initialElectionState: ElectionState = {
   boundaries: [],
   boundariesHaveInternalId: false,
   boundaryInternalIdAlias: null,
+  boundariesSpatialReference: null,
   issueRegistry: [],
   voteData: new Map(),
   totalRegisteredVoters: null,

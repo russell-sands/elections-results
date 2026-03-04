@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@arcgis/core": "^5.0.6",
+    "@arcgis/map-components": "^5.0.8",
     "@esri/arcgis-rest-feature-service": "^4.9.1",
     "@esri/arcgis-rest-request": "^4.9.1",
     "react": "^19.2.4",

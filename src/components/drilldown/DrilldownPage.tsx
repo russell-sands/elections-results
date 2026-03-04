@@ -4,7 +4,7 @@ import { selectComputedIssues } from "../../state/election-selectors";
 import LoadingState from "../common/LoadingState";
 import ErrorState from "../common/ErrorState";
 import PlaceholderNotice from "../common/PlaceholderNotice";
-import ElectionMap from "../map/ElectionMap";
+import ResultsMap from "./ResultsMap";
 import BoundaryResultsTable from "./BoundaryResultsTable";
 import styles from "./DrilldownPage.module.css";
 
@@ -31,6 +31,8 @@ export default function DrilldownPage() {
     ? (state.boundaryInternalIdAlias ?? "Boundary")
     : "Boundary ID";
 
+  console.log(state.boundaries);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -43,7 +45,13 @@ export default function DrilldownPage() {
       <section>
         <h2 className={styles.sectionHeading}>Result Map</h2>
         <div className={styles.mapContainer}>
-          <ElectionMap />
+          {state.boundariesSpatialReference && (
+            <ResultsMap
+              issue={issue}
+              boundaries={state.boundaries}
+              spatialReference={state.boundariesSpatialReference}
+            />
+          )}
         </div>
       </section>
       <section>

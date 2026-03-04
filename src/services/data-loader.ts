@@ -7,6 +7,7 @@ export interface ElectionLoadResult {
   boundaries: Boundary[];
   boundariesHaveInternalId: boolean;
   boundaryInternalIdAlias: string | null;
+  boundariesSpatialReference: { wkid: number; latestWkid?: number } | null;
   issueRegistry: IssueRegistryRow[];
   voteData: Map<string, VoteRow[]>;
   totalRegisteredVoters: number | null;
@@ -22,7 +23,7 @@ export async function loadElectionData(
     fetchIssuesRegistry(issuesRegistryUrl),
   ]);
 
-  const { boundaries, hasInternalId, internalIdAlias }: BoundariesResult = boundariesResult;
+  const { boundaries, hasInternalId, internalIdAlias, spatialReference }: BoundariesResult = boundariesResult;
 
   // Fetch all per-issue vote tables in parallel, driven by registry
   const issueVoteResults = await Promise.all(
@@ -48,6 +49,7 @@ export async function loadElectionData(
     boundaries,
     boundariesHaveInternalId: hasInternalId,
     boundaryInternalIdAlias: internalIdAlias,
+    boundariesSpatialReference: spatialReference,
     issueRegistry,
     voteData,
     totalRegisteredVoters: totalRegisteredVoters > 0 ? totalRegisteredVoters : null,

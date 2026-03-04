@@ -6,10 +6,11 @@ export interface BoundariesResult {
   boundaries: Boundary[];
   hasInternalId: boolean;
   internalIdAlias: string | null;
+  spatialReference: { wkid: number; latestWkid?: number } | null;
 }
 
 export async function fetchBoundaries(url: string): Promise<BoundariesResult> {
-  const { features, fields } = await fetchAllFeatures({
+  const { features, fields, spatialReference } = await fetchAllFeatures({
     url,
     outFields: ['*'],
     returnGeometry: true,
@@ -27,5 +28,5 @@ export async function fetchBoundaries(url: string): Promise<BoundariesResult> {
     geometry: f.geometry as unknown as Polygon | null,
   }));
 
-  return { boundaries, hasInternalId, internalIdAlias };
+  return { boundaries, hasInternalId, internalIdAlias, spatialReference };
 }
