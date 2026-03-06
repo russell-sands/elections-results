@@ -44,17 +44,15 @@ export default function DrilldownPage() {
       </div>
       <section>
         <h2 className={styles.sectionHeading}>Result Map</h2>
-        <div className={styles.mapContainer}>
-          {state.boundariesSpatialReference && (
-            <ResultsMap
-              issue={issue}
-              boundaries={state.boundaries}
-              spatialReference={state.boundariesSpatialReference}
-              selectedBoundaryId={selectedBoundaryId}
-              onSelectBoundary={setSelectedBoundaryId}
-            />
-          )}
-        </div>
+        {state.boundariesSpatialReference && (
+          <ResultsMap
+            issue={issue}
+            boundaries={state.boundaries}
+            spatialReference={state.boundariesSpatialReference}
+            selectedBoundaryId={selectedBoundaryId}
+            onSelectBoundary={setSelectedBoundaryId}
+          />
+        )}
       </section>
       <section>
         <div className={styles.sectionHeadingRow}>

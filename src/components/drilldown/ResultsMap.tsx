@@ -12,6 +12,7 @@ import * as predominanceRendererCreator from "@arcgis/core/smartMapping/renderer
 import * as pieChartRendererCreator from "@arcgis/core/smartMapping/renderers/pieChart";
 import Field from "@arcgis/core/layers/support/Field";
 import type { ComputedIssue, Boundary } from "../../types/election";
+import styles from "./ResultsMap.module.css";
 
 interface ResultsMapProps {
   issue: ComputedIssue;
@@ -172,7 +173,9 @@ export default function ResultsMap({
       );
       if (results.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const oid = (results[0] as any).graphic.getAttribute("ObjectID") as number;
+        const oid = (results[0] as any).graphic.getAttribute(
+          "ObjectID",
+        ) as number;
         const boundaryId = oidToGlobalIdRef.current.get(oid) ?? null;
         onSelectBoundaryRef.current(boundaryId);
       } else if (selectedBoundaryIdRef.current !== null) {
@@ -273,20 +276,29 @@ export default function ResultsMap({
 
   return (
     <>
-      <arcgis-map
-        ref={(el: HTMLElement | null) => {
-          mapRef.current = el;
-        }}
-        basemap="gray-vector"
-        onarcgisViewReadyChange={handleViewReady}
-        id={mapId}
-      >
-        <arcgis-legend
-          referenceElement={mapId}
-          slot="bottom-right"
-          legendStyle="card"
-        ></arcgis-legend>
-      </arcgis-map>
+      <div className={styles.mapWrapper}>
+        <div className={styles.mapContainer}>
+          <arcgis-map
+            ref={(el: HTMLElement | null) => {
+              mapRef.current = el;
+            }}
+            basemap="gray-vector"
+            onarcgisViewReadyChange={handleViewReady}
+            id={mapId}
+          ></arcgis-map>
+        </div>
+      </div>
+      <br />
+      <h3 className={styles.legendHeading}>Legend</h3>
+      <div className={styles.mapWrapper}>
+        <div className={styles.legendContainer}>
+          <arcgis-legend
+            referenceElement={mapId}
+            legendStyle="card"
+            cardStyleLayout="stack"
+          ></arcgis-legend>
+        </div>
+      </div>
     </>
   );
 }
