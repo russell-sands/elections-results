@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { useElectionState } from "../../state/election-context";
 import { selectComputedIssues } from "../../state/election-selectors";
@@ -11,6 +12,9 @@ import styles from "./DrilldownPage.module.css";
 export default function DrilldownPage() {
   const { issueId } = useParams<{ issueId: string }>();
   const state = useElectionState();
+  const [selectedBoundaryId, setSelectedBoundaryId] = useState<string | null>(
+    null,
+  );
 
   if (state.status === "loading" || state.status === "idle") {
     return <LoadingState />;
@@ -31,8 +35,6 @@ export default function DrilldownPage() {
     ? (state.boundaryInternalIdAlias ?? "Boundary")
     : "Boundary ID";
 
-  console.log(state.boundaries);
-
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -50,16 +52,30 @@ export default function DrilldownPage() {
               issue={issue}
               boundaries={state.boundaries}
               spatialReference={state.boundariesSpatialReference}
+              selectedBoundaryId={selectedBoundaryId}
+              onSelectBoundary={setSelectedBoundaryId}
             />
           )}
         </div>
       </section>
       <section>
-        <h2 className={styles.sectionHeading}>Detailed Results</h2>
+        <div className={styles.sectionHeadingRow}>
+          <h2 className={styles.sectionHeading}>Detailed Results</h2>
+          {selectedBoundaryId !== null && (
+            <button
+              className={styles.clearSelectionButton}
+              onClick={() => setSelectedBoundaryId(null)}
+            >
+              Reset view
+            </button>
+          )}
+        </div>
         <BoundaryResultsTable
           issue={issue}
           boundaries={state.boundaries}
           boundaryColumnHeader={boundaryColumnHeader}
+          selectedBoundaryId={selectedBoundaryId}
+          onSelectBoundary={setSelectedBoundaryId}
         />
       </section>
     </div>

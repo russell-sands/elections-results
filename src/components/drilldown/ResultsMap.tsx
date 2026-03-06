@@ -1,4 +1,4 @@
-import { useRef, useCallback, useId } from "react";
+import { useRef, useCallback, useEffect, useId } from "react";
 import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-legend";
 import type MapView from "@arcgis/core/views/MapView";
@@ -11,13 +11,14 @@ import Color from "@arcgis/core/Color";
 import * as predominanceRendererCreator from "@arcgis/core/smartMapping/renderers/predominance";
 import * as pieChartRendererCreator from "@arcgis/core/smartMapping/renderers/pieChart";
 import Field from "@arcgis/core/layers/support/Field";
-import PopupTemplate from "@arcgis/core/PopupTemplate";
 import type { ComputedIssue, Boundary } from "../../types/election";
 
 interface ResultsMapProps {
   issue: ComputedIssue;
   boundaries: Boundary[];
   spatialReference: { wkid: number; latestWkid?: number };
+  selectedBoundaryId: string | null;
+  onSelectBoundary: (id: string | null) => void;
 }
 
 /** Map-specific palette — complementary to the app brand but without semantic meaning. */
@@ -38,9 +39,21 @@ export default function ResultsMap({
   issue,
   boundaries,
   spatialReference,
+  selectedBoundaryId,
+  onSelectBoundary,
 }: ResultsMapProps) {
   const mapRef = useRef<HTMLElement | null>(null);
   const mapId = useId();
+  const viewRef = useRef<MapView | null>(null);
+  const predominanceLayerRef = useRef<FeatureLayer | null>(null);
+  const pieLayerRef = useRef<FeatureLayer | null>(null);
+  // ObjectID → boundary globalId lookup for resolving hitTest results
+  const oidToGlobalIdRef = useRef<Map<number, string>>(new Map());
+  // Stable ref for the callback so the click handler always sees the latest
+  const onSelectBoundaryRef = useRef(onSelectBoundary);
+  onSelectBoundaryRef.current = onSelectBoundary;
+  const selectedBoundaryIdRef = useRef(selectedBoundaryId);
+  selectedBoundaryIdRef.current = selectedBoundaryId;
 
   const handleViewReady = useCallback(() => {
     const mapElement = mapRef.current;
@@ -58,6 +71,7 @@ export default function ResultsMap({
     // Build fields using class instances
     const fields = [
       new Field({ name: "ObjectID", alias: "ObjectID", type: "oid" }),
+      new Field({ name: "boundary_id", alias: "Boundary ID", type: "string" }),
       new Field({ name: "boundary_name", alias: "Boundary", type: "string" }),
       ...outcomeFieldDefs.map(
         (f) =>
@@ -67,17 +81,21 @@ export default function ResultsMap({
 
     // Build graphics with proper Polygon geometry instances
     const graphics: Graphic[] = [];
+    const oidToGlobalId = new Map<number, string>();
     let idx = 0;
 
     for (const row of issue.voteRows) {
       const boundary = boundaryMap.get(row.boundaryId);
       if (!boundary?.geometry) continue;
 
+      const oid = idx++;
+      oidToGlobalId.set(oid, row.boundaryId);
+
       const attributes: Record<string, string | number> = {
-        ObjectID: idx++,
+        ObjectID: oid,
+        boundary_id: row.boundaryId,
         boundary_name: boundary.internalId ?? row.boundaryId,
       };
-
       for (const f of outcomeFieldDefs) {
         attributes[f.fieldName] = row.outcomes[f.sourceField] ?? 0;
       }
@@ -93,10 +111,7 @@ export default function ResultsMap({
 
     if (graphics.length === 0) return;
 
-    // Build popup content
-    const popupContent = outcomeFieldDefs
-      .map((f) => `<b>${f.label}:</b> {${f.fieldName}}`)
-      .join("<br>");
+    oidToGlobalIdRef.current = oidToGlobalId;
 
     // Create a second copy of graphics for the pie chart layer
     const pieGraphics = graphics.map(
@@ -107,24 +122,14 @@ export default function ResultsMap({
         }),
     );
 
-    // Predominance layer (polygon fill colored by winning outcome)
+    // Predominance layer (polygon fill colored by winning outcome) — no popup
     const predominanceLayer = new FeatureLayer({
       source: graphics,
       objectIdField: "ObjectID",
       fields,
       geometryType: "polygon",
       spatialReference: sr,
-      popupTemplate: new PopupTemplate({
-        title: "{boundary_name}",
-        content: popupContent,
-      }),
       legendEnabled: false,
-      // renderer: new SimpleRenderer({
-      //   symbol: new SimpleFillSymbol({
-      //     color: [0, 0, 0, 0],
-      //     outline: { color: "black", width: 1.5 },
-      //   }),
-      // }),
     });
 
     // Pie chart layer (drawn on top)
@@ -140,12 +145,40 @@ export default function ResultsMap({
     // Access the map component's map and view
     const el = mapElement as unknown as {
       map: { add: (layer: FeatureLayer, index?: number) => void };
-      view: { goTo: (target: unknown) => void };
+      view: MapView;
     };
+
+    // Disable popups
+    el.view.popupEnabled = false;
+
+    // Store refs for the selection effect
+    viewRef.current = el.view;
+    predominanceLayerRef.current = predominanceLayer;
+    pieLayerRef.current = pieLayer;
 
     // Add predominance first (index 0), then pie on top
     el.map.add(predominanceLayer, 0);
     el.map.add(pieLayer);
+
+    // Handle map clicks for selection
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    el.view.on("click", async (event: any) => {
+      const hitResult = await el.view.hitTest(event);
+      const results = hitResult.results.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (r: any) =>
+          r.type === "graphic" &&
+          (r.layer === predominanceLayer || r.layer === pieLayer),
+      );
+      if (results.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const oid = (results[0] as any).graphic.getAttribute("ObjectID") as number;
+        const boundaryId = oidToGlobalIdRef.current.get(oid) ?? null;
+        onSelectBoundaryRef.current(boundaryId);
+      } else if (selectedBoundaryIdRef.current !== null) {
+        onSelectBoundaryRef.current(null);
+      }
+    });
 
     const rendererAttributes = outcomeFieldDefs.map((f) => ({
       field: f.fieldName,
@@ -172,11 +205,10 @@ export default function ResultsMap({
       // Override auto-generated colors with brand palette
       const predRenderer = response.renderer;
       predRenderer.uniqueValueInfos!.forEach((info, i) => {
-        // Override more defaults to get the style the way I want
-        info.symbol.outline.color = "#ecedeb";
-        info.symbol.outline.width = 0.7;
-        const color = MAP_COLORS[i % MAP_COLORS.length]!;
-        (info.symbol as SimpleFillSymbol).color = color;
+        const sym = info.symbol as SimpleFillSymbol;
+        sym.outline!.color = new Color("#ecedeb");
+        sym.outline!.width = 0.7;
+        sym.color = MAP_COLORS[i % MAP_COLORS.length]!;
       });
       predominanceLayer.renderer = predRenderer;
       predominanceLayer.legendEnabled = true;
@@ -193,7 +225,6 @@ export default function ResultsMap({
         view: el.view as unknown as MapView,
         attributes: rendererAttributes,
         includeSizeVariable: true,
-        // sizeOptimizationEnabled: true,
       });
 
       // Override auto-generated colors with brand palette
@@ -202,11 +233,9 @@ export default function ResultsMap({
         attr.color = MAP_COLORS[i % MAP_COLORS.length]!;
       });
 
-      // Override more defaults to get the style the way I want
       pieRenderer.outline!.color = "#ecedeb";
       pieRenderer.outline!.width = 1;
       pieRenderer.visualVariables!.forEach((visVar) => {
-        if (visVar.type === "size") console.log(visVar);
         if (visVar.type === "size") visVar.maxSize = 25;
       });
       pieRenderer.holePercentage = 0.38;
@@ -215,13 +244,39 @@ export default function ResultsMap({
     });
   }, [issue, boundaries, spatialReference]);
 
+  // Filter layers and zoom when selection changes
+  useEffect(() => {
+    const view = viewRef.current;
+    const predLayer = predominanceLayerRef.current;
+    const pieLayer = pieLayerRef.current;
+    if (!view || !predLayer || !pieLayer) return;
+
+    if (selectedBoundaryId) {
+      const escaped = selectedBoundaryId.replace(/'/g, "''");
+      const expr = `boundary_id = '${escaped}'`;
+      predLayer.definitionExpression = expr;
+      pieLayer.definitionExpression = expr;
+    } else {
+      predLayer.definitionExpression = "1=1";
+      pieLayer.definitionExpression = "1=1";
+    }
+
+    // Wait for filter to apply, then zoom to the new extent
+    Promise.all([predLayer.queryExtent(), pieLayer.queryExtent()]).then(
+      ([predResult]) => {
+        if (predResult.extent) {
+          view.goTo(predResult.extent.expand(1.2));
+        }
+      },
+    );
+  }, [selectedBoundaryId, boundaries]);
+
   return (
     <>
       <arcgis-map
         ref={(el: HTMLElement | null) => {
           mapRef.current = el;
         }}
-        // className={styles.map}
         basemap="gray-vector"
         onarcgisViewReadyChange={handleViewReady}
         id={mapId}

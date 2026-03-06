@@ -27,7 +27,15 @@
   color: var(--color-text-primary);
 }
 
-.table tbody tr:hover {
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background-color: var(--color-surface-raised);
+}
+
+.selectedRow {
   background-color: var(--color-surface-raised);
 }
 

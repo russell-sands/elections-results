@@ -33,11 +33,37 @@
   color: var(--color-text-primary);
 }
 
+.sectionHeadingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
 .sectionHeading {
   font-family: var(--font-display);
   font-size: 1.125rem;
   color: var(--color-text-primary);
   margin-bottom: var(--space-sm);
+}
+
+.clearSelectionButton {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-no);
+  background: none;
+  border: 1px solid var(--color-no);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  margin-bottom: var(--space-sm);
+}
+
+.clearSelectionButton:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
 }
 
 .mapContainer {

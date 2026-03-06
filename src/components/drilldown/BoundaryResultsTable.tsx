@@ -6,14 +6,22 @@ interface BoundaryResultsTableProps {
   issue: ComputedIssue;
   boundaries: Boundary[];
   boundaryColumnHeader: string;
+  selectedBoundaryId: string | null;
+  onSelectBoundary: (id: string | null) => void;
 }
 
 export default function BoundaryResultsTable({
   issue,
   boundaries,
   boundaryColumnHeader,
+  selectedBoundaryId,
+  onSelectBoundary,
 }: BoundaryResultsTableProps) {
   const boundaryMap = new Map(boundaries.map((b) => [b.globalId, b]));
+
+  const visibleRows = selectedBoundaryId
+    ? issue.voteRows.filter((r) => r.boundaryId === selectedBoundaryId)
+    : issue.voteRows;
 
   return (
     <div className={styles.tableContainer}>
@@ -30,16 +38,21 @@ export default function BoundaryResultsTable({
           </tr>
         </thead>
         <tbody>
-          {issue.voteRows.map((row) => {
+          {visibleRows.map((row) => {
             const boundary = boundaryMap.get(row.boundaryId);
             const boundaryName = boundary?.internalId ?? row.boundaryId;
             const rowTotal = issue.outcomeFields.reduce(
               (sum, o) => sum + (row.outcomes[o.field] ?? 0),
               0,
             );
+            const isSelected = row.boundaryId === selectedBoundaryId;
 
             return (
-              <tr key={row.boundaryId}>
+              <tr
+                key={row.boundaryId}
+                className={`${styles.clickableRow} ${isSelected ? styles.selectedRow : ''}`}
+                onClick={() => onSelectBoundary(row.boundaryId)}
+              >
                 <td>{boundaryName}</td>
                 {issue.outcomeFields.map((o) => {
                   const votes = row.outcomes[o.field] ?? 0;
