@@ -4,7 +4,6 @@ import { useElectionState } from "../../state/election-context";
 import { selectComputedIssues } from "../../state/election-selectors";
 import LoadingState from "../common/LoadingState";
 import ErrorState from "../common/ErrorState";
-import PlaceholderNotice from "../common/PlaceholderNotice";
 import ResultsMap from "./ResultsMap";
 import BoundaryResultsTable from "./BoundaryResultsTable";
 import styles from "./DrilldownPage.module.css";
@@ -42,7 +41,6 @@ export default function DrilldownPage() {
           &larr; Back
         </Link>
         <h1 className={styles.issueName}>{issue.registry.issueName}</h1>
-        <PlaceholderNotice />
       </div>
       <section>
         <h2 className={styles.sectionHeading}>Result Map</h2>
