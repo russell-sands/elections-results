@@ -1,7 +1,7 @@
 import { useElectionState } from '../../state/election-context';
 import LoadingState from '../common/LoadingState';
 import ErrorState from '../common/ErrorState';
-import PlaceholderNotice from '../common/PlaceholderNotice';
+
 import ElectionMap from './ElectionMap';
 import styles from './MapPage.module.css';
 
@@ -18,7 +18,6 @@ export default function MapPage() {
 
   return (
     <div className={styles.page}>
-      <PlaceholderNotice />
       <div className={styles.mapContainer}>
         <ElectionMap />
       </div>

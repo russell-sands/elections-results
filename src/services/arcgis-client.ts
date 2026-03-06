@@ -20,7 +20,7 @@ export async function fetchAllFeatures(options: {
     returnGeometry: options.returnGeometry ?? false,
   })) as IQueryFeaturesResponse;
 
-  const sr = (response as Record<string, unknown>).spatialReference as
+  const sr = (response as unknown as Record<string, unknown>).spatialReference as
     | { wkid: number; latestWkid?: number }
     | undefined;
 
