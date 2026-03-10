@@ -8,11 +8,21 @@ export default function AppHeader() {
       <div className={styles.inner}>
         <div className={styles.brand}>
           {envConfig.logoUrl && (
-            <img
-              src={envConfig.logoUrl}
-              alt={`${envConfig.jurisdictionName} logo`}
-              className={styles.logo}
-            />
+            envConfig.logoLinkUrl ? (
+              <a href={envConfig.logoLinkUrl} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={envConfig.logoUrl}
+                  alt={`${envConfig.jurisdictionName} logo`}
+                  className={styles.logo}
+                />
+              </a>
+            ) : (
+              <img
+                src={envConfig.logoUrl}
+                alt={`${envConfig.jurisdictionName} logo`}
+                className={styles.logo}
+              />
+            )
           )}
           <div className={styles.titles}>
             <span className={styles.electionName}>{envConfig.electionName}</span>
