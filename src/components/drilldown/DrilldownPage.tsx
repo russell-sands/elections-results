@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { useElectionState } from "../../state/election-context";
 import { selectComputedIssues } from "../../state/election-selectors";
@@ -14,6 +14,10 @@ export default function DrilldownPage() {
   const [selectedBoundaryId, setSelectedBoundaryId] = useState<string | null>(
     null,
   );
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (state.status === "loading" || state.status === "idle") {
     return <LoadingState />;
