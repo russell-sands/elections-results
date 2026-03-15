@@ -10,7 +10,7 @@
 }
 
 .table th {
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   color: var(--color-text-secondary);
   text-transform: uppercase;
@@ -25,6 +25,7 @@
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-primary);
+  text-align: center;
 }
 
 .clickableRow {
@@ -40,11 +41,11 @@
 }
 
 .numericCell {
-  text-align: right;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
 }
 
 .numericHeader {
-  text-align: right;
+  text-align: center;
 }
