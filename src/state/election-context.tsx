@@ -3,20 +3,14 @@ import {
   electionReducer,
   initialElectionState,
   type ElectionState,
-  type ElectionAction,
 } from './election-reducer';
 import { loadElectionData } from '../services/data-loader';
 import { envConfig } from '../config/env';
 
 const ElectionStateContext = createContext<ElectionState>(initialElectionState);
-const ElectionDispatchContext = createContext<React.Dispatch<ElectionAction>>(() => {});
 
 export function useElectionState() {
   return useContext(ElectionStateContext);
-}
-
-export function useElectionDispatch() {
-  return useContext(ElectionDispatchContext);
 }
 
 export function ElectionProvider({ children }: { children: ReactNode }) {
@@ -51,9 +45,7 @@ export function ElectionProvider({ children }: { children: ReactNode }) {
 
   return (
     <ElectionStateContext.Provider value={state}>
-      <ElectionDispatchContext.Provider value={dispatch}>
-        {children}
-      </ElectionDispatchContext.Provider>
+      {children}
     </ElectionStateContext.Provider>
   );
 }

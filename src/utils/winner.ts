@@ -88,8 +88,6 @@ export function computeOutcomeResults(
     if (isTieAtBoundary) {
       winnerFields = new Set(aboveCut.map((a) => a.field));
       winnerStatus = aboveCut.length > 0 ? 'winner' : 'tie';
-      // If no one is clearly above the tie, it's purely a tie
-      if (aboveCut.length === 0) winnerStatus = 'tie';
     } else {
       winnerFields = topNFields;
       winnerStatus = 'winner';
